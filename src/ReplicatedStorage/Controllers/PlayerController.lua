@@ -2,7 +2,7 @@
 --Created Date: Wednesday July 26th 2023 6:13:47 pm CEST
 --Author: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 -------
---Last Modified: Thursday July 27th 2023 1:38:55 pm CEST
+--Last Modified: Friday July 28th 2023 2:49:49 am CEST
 --Modified By: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 --]]
 --// Services
@@ -24,7 +24,9 @@ local PlayerController = Knit.CreateController({ Name = "PlayerController" })
 --// Variables
 local Mouse = Players.LocalPlayer:GetMouse()
 
-function PlayerController:KnitInit() end
+function PlayerController:KnitInit()
+	self.SpawnLoop = false
+end
 
 function PlayerController:KnitStart()
 	-------------Variables-----------
@@ -41,12 +43,42 @@ function PlayerController:KnitStart()
 
 	-------------Classes-------------
 	-----------Initialize------------
+
+	local function castRay()
+		local rayOrigin = Camera.CFrame.Position
+		local rayDirection = CFrame.new(Camera.CFrame.Position, Mouse.Hit.Position).LookVector * 200
+		local raycastResult = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
+
+		return raycastResult
+	end
+
 	Binds.Game.StartMouseCarry.Event:Connect(function(UnitName)
-		if UnitName and ReplicatedStorage.Assets.Units[UnitName] then
-			local Unit: MeshPart = ReplicatedStorage.Assets.Units[UnitName]:Clone()
+		local Units = ReplicatedStorage.Assets.Units
+		local AllUnits = Units:GetChildren()
+
+		local Found = UnitName ~= "Random" and Units[UnitName] or AllUnits[math.random(1, #AllUnits)]
+
+		if UnitName and Found then
+			local Unit: MeshPart = Found:Clone()
 			Unit.CanCollide = false
 			Unit.Anchored = true
-			Unit.Parent = workspace
+
+			local initRay = castRay()
+			if initRay then
+				local OldSize = Unit.Size
+
+				Unit.CFrame = CFrame.new(initRay.Position) * CFrame.new(0, OldSize.Y / 2, 0) -- * CFrame.new(0, -(Unit.Size.Y + Unit.Size.Y / 2), 0)
+				Unit.Size = Vector3.zero
+
+				local T = Feel.Tween.new(Unit, { Size = OldSize }, 0.5, {
+					EasingStyle = Enum.EasingStyle.Back,
+				})
+
+				print(T)
+				T:Play()
+			end
+
+			Unit.Parent = workspace.PlacedUnits
 
 			self.Last = Unit
 
@@ -55,15 +87,8 @@ function PlayerController:KnitStart()
 			local springConstant = 0.1
 			local dampingConstant = 0.7
 
-			local function lerp(a, b, t)
-				return a + (b - a) * t
-			end
-
 			self.Connections["Camera"] = RunService.RenderStepped:Connect(function()
-				local rayOrigin = Camera.CFrame.Position
-				local rayDirection = CFrame.new(Camera.CFrame.Position, Mouse.Hit.Position).LookVector * 200
-
-				local raycastResult = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
+				local raycastResult = castRay()
 
 				if raycastResult then
 					local DesiredCF: CFrame = CFrame.new(raycastResult.Position) * CFrame.new(0, Unit.Size.Y / 2, 0)
@@ -75,7 +100,7 @@ function PlayerController:KnitStart()
 					positionVelocity = positionVelocity + positionAcceleration
 
 					local TargetCF = Unit.CFrame * CFrame.new(positionVelocity)
-					Unit.CFrame = CFrame.new(TargetCF.Position, DesiredCF.Position)
+					Unit.CFrame = TargetCF --CFrame.new(TargetCF.Position, DesiredCF.Position)
 
 					-- Use spring-damper model for orientation
 					local cAX, cAY, cAZ = Unit.CFrame:ToEulerAnglesXYZ()
@@ -93,7 +118,7 @@ function PlayerController:KnitStart()
 
 	UserInputService.InputBegan:Connect(function(input: InputObject, gameProcessedEvent: boolean)
 		if input.KeyCode == Enum.KeyCode.Q then
-			Binds.Game.StartMouseCarry:Fire("TNTBarrel")
+			Binds.Game.StartMouseCarry:Fire("Random")
 		end
 	end)
 	UserInputService.InputEnded:Connect(function(input: InputObject, gameProcessedEvent: boolean)
@@ -105,39 +130,40 @@ function PlayerController:KnitStart()
 			local Amount = 1.25
 			if self.Last then
 				local C: MeshPart = self.Last:Clone()
-				C.Parent = workspace.Part
-
-				local D: MeshPart = ReplicatedStorage.Assets.Highlight
-				D.Material = Enum.Material.Neon
-				D.Size = Vector3.new(1, 0.1, 1)
-				D.Color = Color3.new(1, 1, 1)
-				D.CFrame = C.CFrame * CFrame.new(0, -C.Size, 0)
-				D.Parent = C
-
-				local Twen = Feel.Tween.new(
-					D,
-					{
-						Size = Vector3.new(5, 0.1, 5),
-						CFrame = C.CFrame * CFrame.new(0, -C.Size.Y, 0),
-						Transparency = 1,
-					},
-					1,
-					{
-						EasingStyle = Enum.EasingStyle.Linear,
-					}
-				)
-
-				Twen:Play()
-
-				Twen.Completed:Connect(function()
-					D:Destroy()
-				end)
+				C.Parent = workspace.PlacedUnits
 
 				self.Last:Destroy()
 			end
 		end
 	end)
+
+	self:Binds()
 	-----------Initialize------------
+end
+
+function PlayerController:StartCycle()
+	local GameService = Knit.GetService("GameService")
+
+	repeat
+		GameService.SpawnAnimal:Fire()
+		task.wait(0.05)
+	until not self.SpawnLoop
+end
+
+function PlayerController:Binds()
+	local GameService = Knit.GetService("GameService")
+	UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+		if input.KeyCode == Enum.KeyCode.E then
+			self.SpawnLoop = true
+			self:StartCycle()
+		end
+	end)
+
+	UserInputService.InputEnded:Connect(function(input, gameProcessedEvent)
+		if input.KeyCode == Enum.KeyCode.E then
+			self.SpawnLoop = false
+		end
+	end)
 end
 
 function PlayerController:MouseLocation() end
