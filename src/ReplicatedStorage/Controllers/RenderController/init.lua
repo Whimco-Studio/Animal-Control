@@ -2,7 +2,7 @@
 --Created Date: Friday July 28th 2023 12:03:40 am CEST
 --Author: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 -------
---Last Modified: Friday July 28th 2023 2:08:41 am CEST
+--Last Modified: Sunday July 30th 2023 3:11:33 am CEST
 --Modified By: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 --]]
 --// Services
@@ -44,6 +44,7 @@ end
 
 --// Variables
 local Animals = ReplicatedStorage.Animals
+local VisualEffects = script.VisualEffects
 
 function RenderController:KnitInit()
 	self.ActiveAnimals = {}
@@ -58,12 +59,33 @@ function RenderController:KnitStart()
 
 	-------------Classes-------------
 	-----------Initialize------------
+	self.GameService.CreateVFX:Connect(function(Info: { Type: string, id: string })
+		local CurrentEffectsModule = VisualEffects:FindFirstChild(Info.Type)
+		local ActiveAnimal = self.ActiveAnimals[Info.id]
+
+		if not CurrentEffectsModule or not ActiveAnimal then
+			return
+		end
+
+		local Effects = require(CurrentEffectsModule)
+		Effects.Visualize(ActiveAnimal)
+	end)
 	self.GameService.ClientRender:Connect(function(Info: EntityInfo)
 		self:SpawnAnimal(Info)
 	end)
 
 	self:Updater()
 	-----------Initialize------------
+end
+
+function RenderController:GetTableFromId(Id: string)
+	for i, v in ipairs(self.ActiveAnimals) do
+		if v.id == Id then
+			return i, v
+		end
+	end
+
+	return false
 end
 
 function RenderController:Updater()

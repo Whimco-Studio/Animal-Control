@@ -2,7 +2,7 @@
 --Created Date: Thursday July 27th 2023 9:12:25 pm CEST
 --Author: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 -------
---Last Modified: Friday July 28th 2023 2:10:33 am CEST
+--Last Modified: Sunday July 30th 2023 3:11:27 am CEST
 --Modified By: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 --]]
 --[[
@@ -44,10 +44,13 @@ API
 --// Services
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
 local ServerStorage = game:GetService("ServerStorage")
 
 --// Modules
 local Knit = require(ReplicatedStorage.Packages.Knit)
+local Binds = require(ServerScriptService.Config.Binds)
+local Towers = require(ServerScriptService.Config.Towers)
 local Settings = require(ReplicatedStorage.Config.Settings)
 
 --// Class
@@ -76,6 +79,7 @@ function LevelManager.new(Map: Map, ClientUpdater: typeof(Knit.CreateSignal()))
 		ClientUpdater = ClientUpdater,
 
 		EndNodes = {},
+		TowerNodes = {},
 		SpawnNodes = {},
 		SavedNodes = {},
 		Connections = {},
@@ -89,7 +93,7 @@ function LevelManager:RegisterLevel()
 	local Map: Map = self.Map
 	local targetNames = { "SpawnNodes", "Paths" }
 
-	for i, v in pairs(Map:GetChildren()) do
+	for i, v in ipairs(Map:GetChildren()) do
 		if not table.find(targetNames, v.Name) then
 			continue
 		end
@@ -124,7 +128,7 @@ function LevelManager:SpawnAnimal()
 	local Info = {
 		id = id,
 		Path = Path,
-		Health = 100,
+		Health = 100000,
 		Body = Spawn.Position,
 		CurrentWaypointIndex = 1,
 	}
@@ -145,13 +149,63 @@ function LevelManager:SpawnAnimal()
 	Info.Map = Map
 	Info.AnimalType = Animal.Name
 
-	print(#self.ActiveAnimals)
-
 	self.ClientUpdater:FireAll(Info)
 end
 
+function LevelManager:AddTower(Info: Towers.TowerStats, Position: Vector3)
+	local TowerNodes = self.TowerNodes
+	local PositionInArray = #TowerNodes
+
+	Info.Id = HttpService:GenerateGUID(false)
+	Info.Position = Position
+
+	table.insert(TowerNodes, Info)
+end
+
+function LevelManager:ScanTowerArea(Tower: Towers.TowerStats)
+	local Start = Tower.Position
+	local Radius = Tower.range * 5
+	local Damage = Tower.damage
+
+	for _, Animal in ipairs(self.ActiveAnimals) do
+		local dist = (Start - Animal.Body).Magnitude
+		if dist <= Radius then
+			Binds.VFX:Fire({
+				Type = "Damage",
+				id = Animal.id,
+			})
+			Animal.Health = Animal.Health - Damage
+			if Animal.Health <= 0 then
+				-- Remove the animal if health is less than or equals to 0
+				self:RemoveAnimal(Animal.id)
+			end
+		end
+	end
+end
+
+function LevelManager:TowersUpdate()
+	local TowerNodes: { [number]: Towers.TowerStats } = self.TowerNodes
+
+	for index, Tower: Towers.TowerStats in ipairs(TowerNodes) do
+		self:ScanTowerArea(Tower)
+	end
+end
+
+function LevelManager:RemoveAnimal(Id: string)
+	for i, Animal in ipairs(self.ActiveAnimals) do
+		if Animal.id == Id then
+			-- Destroy visual representation if exists
+			if Animal.tempBody then
+				Animal.tempBody:Destroy()
+			end
+			table.remove(self.ActiveAnimals, i)
+			break
+		end
+	end
+end
+
 function LevelManager:GetTableFromId(Id: string)
-	for i, v in pairs(self.ActiveAnimals) do
+	for i, v in ipairs(self.ActiveAnimals) do
 		if v.id == Id then
 			return i, v
 		end
@@ -207,13 +261,13 @@ function LevelManager:MoveAnimal(dt, info)
 end
 
 function LevelManager:Update(dt: number)
-	for animal, info in pairs(self.ActiveAnimals) do
+	for animal, info in ipairs(self.ActiveAnimals) do
 		self:MoveAnimal(dt, info)
 	end
 end
 
 function LevelManager:Disconnect()
-	for _, c: RBXScriptConnection in pairs(self.Connections) do
+	for _, c: RBXScriptConnection in ipairs(self.Connections) do
 		c:Disconnect()
 	end
 end

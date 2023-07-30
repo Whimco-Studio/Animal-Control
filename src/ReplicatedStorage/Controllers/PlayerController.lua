@@ -2,7 +2,7 @@
 --Created Date: Wednesday July 26th 2023 6:13:47 pm CEST
 --Author: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 -------
---Last Modified: Friday July 28th 2023 2:49:49 am CEST
+--Last Modified: Saturday July 29th 2023 11:09:35 pm CEST
 --Modified By: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 --]]
 --// Services
@@ -30,9 +30,11 @@ end
 
 function PlayerController:KnitStart()
 	-------------Variables-----------
+	local GameService = Knit.GetService("GameService")
 	local Camera = workspace.CurrentCamera
 	self.Connections = {}
 	self.Last = false
+	self.LastPosition = Vector3.zero
 
 	local raycastParams = RaycastParams.new()
 	raycastParams.FilterType = Enum.RaycastFilterType.Include
@@ -65,6 +67,8 @@ function PlayerController:KnitStart()
 
 			local initRay = castRay()
 			if initRay then
+				self.LastPosition = initRay.Position
+
 				local OldSize = Unit.Size
 
 				Unit.CFrame = CFrame.new(initRay.Position) * CFrame.new(0, OldSize.Y / 2, 0) -- * CFrame.new(0, -(Unit.Size.Y + Unit.Size.Y / 2), 0)
@@ -74,7 +78,6 @@ function PlayerController:KnitStart()
 					EasingStyle = Enum.EasingStyle.Back,
 				})
 
-				print(T)
 				T:Play()
 			end
 
@@ -91,6 +94,8 @@ function PlayerController:KnitStart()
 				local raycastResult = castRay()
 
 				if raycastResult then
+					self.LastPosition = raycastResult.Position
+
 					local DesiredCF: CFrame = CFrame.new(raycastResult.Position) * CFrame.new(0, Unit.Size.Y / 2, 0)
 
 					-- Use spring-damper model for position
@@ -132,6 +137,8 @@ function PlayerController:KnitStart()
 				local C: MeshPart = self.Last:Clone()
 				C.Parent = workspace.PlacedUnits
 
+				GameService.CreateTower:Fire(self.Last.Name, self.LastPosition)
+
 				self.Last:Destroy()
 			end
 		end
@@ -146,7 +153,7 @@ function PlayerController:StartCycle()
 
 	repeat
 		GameService.SpawnAnimal:Fire()
-		task.wait(0.05)
+		task.wait(1)
 	until not self.SpawnLoop
 end
 
