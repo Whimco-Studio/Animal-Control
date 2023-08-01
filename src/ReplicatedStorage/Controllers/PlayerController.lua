@@ -2,10 +2,11 @@
 --Created Date: Wednesday July 26th 2023 6:13:47 pm CEST
 --Author: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 -------
---Last Modified: Saturday July 29th 2023 11:09:35 pm CEST
+--Last Modified: Tuesday August 1st 2023 3:18:19 am CEST
 --Modified By: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 --]]
 --// Services
+local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -134,10 +135,20 @@ function PlayerController:KnitStart()
 
 			local Amount = 1.25
 			if self.Last then
+				local Id = HttpService:GenerateGUID(false)
+
 				local C: MeshPart = self.Last:Clone()
+				C:SetAttribute("Id", Id)
 				C.Parent = workspace.PlacedUnits
 
-				GameService.CreateTower:Fire(self.Last.Name, self.LastPosition)
+				local ClickDetector = Instance.new("ClickDetector")
+				ClickDetector.Parent = C
+				C.Touched:Connect(function()
+					Binds.Game.TowerClicked:Fire(Id)
+				end)
+
+				GameService.CreateTower:Fire(self.Last.Name, self.LastPosition, Id)
+				Binds.Game.TowerCreated:Fire(C, Id)
 
 				self.Last:Destroy()
 			end

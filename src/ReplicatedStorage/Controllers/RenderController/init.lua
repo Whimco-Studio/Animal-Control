@@ -2,7 +2,7 @@
 --Created Date: Friday July 28th 2023 12:03:40 am CEST
 --Author: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 -------
---Last Modified: Sunday July 30th 2023 3:11:33 am CEST
+--Last Modified: Tuesday August 1st 2023 4:21:15 am CEST
 --Modified By: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 --]]
 --// Services
@@ -11,6 +11,7 @@ local RunService = game:GetService("RunService")
 
 --// Modules
 -- local Table = require(ReplicatedStorage.Util.Table)
+local Binds = require(ReplicatedStorage.Config.Bindables)
 local Settings = require(ReplicatedStorage.Config.Settings)
 
 --// Knit
@@ -44,10 +45,14 @@ end
 
 --// Variables
 local Animals = ReplicatedStorage.Animals
+local Animations = require(ReplicatedStorage.Config.Quirkymals.Animations)
 local VisualEffects = script.VisualEffects
+
+local AnimationCache = {}
 
 function RenderController:KnitInit()
 	self.ActiveAnimals = {}
+	self.ActiveTowers = {}
 	self.DistanceCaches = {}
 end
 
@@ -59,23 +64,49 @@ function RenderController:KnitStart()
 
 	-------------Classes-------------
 	-----------Initialize------------
-	self.GameService.CreateVFX:Connect(function(Info: { Type: string, id: string })
-		local CurrentEffectsModule = VisualEffects:FindFirstChild(Info.Type)
-		local ActiveAnimal = self.ActiveAnimals[Info.id]
-
-		if not CurrentEffectsModule or not ActiveAnimal then
-			return
-		end
-
-		local Effects = require(CurrentEffectsModule)
-		Effects.Visualize(ActiveAnimal)
+	self.GameService.CreateVFX:Connect(function(Info: { Type: string, id: string, value: number })
+		self:CreateVFX(Info)
 	end)
 	self.GameService.ClientRender:Connect(function(Info: EntityInfo)
 		self:SpawnAnimal(Info)
 	end)
 
+	Binds.Game.RemoveAnimal.Event:Connect(function(ID: string)
+		local ActiveAnimal: EntityInfo = self.ActiveAnimals[ID]
+
+		if ActiveAnimal then
+			ActiveAnimal.Animal:Destroy()
+			table.clear(ActiveAnimal)
+			self.ActiveAnimals[ID] = nil
+		end
+	end)
+
+	Binds.Game.TowerCreated.Event:Connect(function(Tower: MeshPart, Id: string)
+		self.ActiveTowers[Id] = {
+			Tower = Tower,
+		}
+
+		self:CreateVFX({
+			Type = "Tower",
+			Action = "TowerCreated",
+			id = Id,
+		})
+	end)
+
 	self:Updater()
 	-----------Initialize------------
+end
+
+function RenderController:CreateVFX(Info: { Type: string, id: string, value: number })
+	local CurrentEffectsModule = VisualEffects:FindFirstChild(Info.Action)
+	local ActiveEntity = self.ActiveAnimals[Info.id] or self.ActiveTowers[Info.id]
+
+	if not CurrentEffectsModule or not ActiveEntity then
+		return
+	end
+
+	local Effects = require(CurrentEffectsModule)
+	Effects.Visualize(ActiveEntity, Info)
 end
 
 function RenderController:GetTableFromId(Id: string)
@@ -99,6 +130,7 @@ end
 function RenderController:MoveAnimal(dt, info: EntityInfo & { Animal: Model & { HumanoidRootPart: BasePart } })
 	local Map: Map = info.Map
 	local Animal = info.Animal
+
 	local humanoidRootPart = Animal:FindFirstChild("HumanoidRootPart")
 	local waypoints = info.Path
 	local currentWaypoint: BasePart = waypoints[info.CurrentWaypointIndex]
@@ -140,11 +172,16 @@ end
 
 function RenderController:SpawnAnimal(Info: EntityInfo)
 	local Map: Map = Info.Map
+	local EnemyUI: BillboardGui = ReplicatedStorage.Assets.Gui.EnemyUI:Clone()
 
 	local Animal: Model & { HumanoidRootPart: BasePart, Humanoid: Humanoid } = Animals[Info.AnimalType]:Clone()
 	Animal.HumanoidRootPart.Anchored = true
 	Animal.HumanoidRootPart.CanCollide = false
 	Animal.Humanoid:Destroy()
+
+	EnemyUI.Parent = Animal
+	EnemyUI.Adornee = Animal.HumanoidRootPart
+	EnemyUI.Frame.Label.TextLabel.Text = Animal.Name
 
 	local InitialPoses = Animal:FindFirstChild("InitialPoses")
 	if InitialPoses then
@@ -165,6 +202,20 @@ function RenderController:SpawnAnimal(Info: EntityInfo)
 	Info.Animal = Animal
 
 	self.ActiveAnimals[Info.id] = Info
+
+	local Animation = AnimationCache[Animal.Name] or Instance.new("Animation")
+
+	if not AnimationCache[Animal.Name] then
+		AnimationCache[Animal.Name] = Animation
+		Animation.AnimationId = "rbxassetid://" .. Animations[Animal.Name].Roll
+		Animation.Parent = script
+	end
+
+	local WalkAnimationTrack = Animator:LoadAnimation(Animation)
+	WalkAnimationTrack.Looped = true
+	WalkAnimationTrack:Play()
+	WalkAnimationTrack.Priority = Enum.AnimationPriority.Action4
+	WalkAnimationTrack:AdjustSpeed(Settings.Speed * 0.05)
 end
 
 return RenderController

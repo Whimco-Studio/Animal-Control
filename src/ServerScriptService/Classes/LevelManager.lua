@@ -2,7 +2,7 @@
 --Created Date: Thursday July 27th 2023 9:12:25 pm CEST
 --Author: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 -------
---Last Modified: Sunday July 30th 2023 3:11:27 am CEST
+--Last Modified: Tuesday August 1st 2023 3:27:23 am CEST
 --Modified By: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 --]]
 --[[
@@ -128,7 +128,7 @@ function LevelManager:SpawnAnimal()
 	local Info = {
 		id = id,
 		Path = Path,
-		Health = 100000,
+		Health = 100,
 		Body = Spawn.Position,
 		CurrentWaypointIndex = 1,
 	}
@@ -170,11 +170,13 @@ function LevelManager:ScanTowerArea(Tower: Towers.TowerStats)
 	for _, Animal in ipairs(self.ActiveAnimals) do
 		local dist = (Start - Animal.Body).Magnitude
 		if dist <= Radius then
-			Binds.VFX:Fire({
-				Type = "Damage",
-				id = Animal.id,
-			})
 			Animal.Health = Animal.Health - Damage
+			Binds.VFX:Fire({
+				Type = "Enemy",
+				Action = "Damage",
+				id = Animal.id,
+				Value = Animal.Health / 100,
+			})
 			if Animal.Health <= 0 then
 				-- Remove the animal if health is less than or equals to 0
 				self:RemoveAnimal(Animal.id)

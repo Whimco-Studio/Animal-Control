@@ -2,7 +2,7 @@
 --Created Date: Thursday July 27th 2023 8:11:28 pm CEST
 --Author: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 -------
---Last Modified: Sunday July 30th 2023 2:51:08 am CEST
+--Last Modified: Tuesday August 1st 2023 3:12:52 am CEST
 --Modified By: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 --]]
 --// Game Services
@@ -43,7 +43,6 @@ function GameService:KnitStart()
 	-----------Initialize------------
 
 	Binds.VFX.Event:Connect(function(Info)
-		print("Game Service VFX")
 		self.Client.CreateVFX:FireAll(Info)
 	end)
 
