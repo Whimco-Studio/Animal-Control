@@ -3,7 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 --Created Date: Sunday July 30th 2023 2:29:31 am CEST
 --Author: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 -------
---Last Modified: Tuesday August 1st 2023 3:39:54 am CEST
+--Last Modified: Tuesday August 1st 2023 8:54:28 pm CEST
 --Modified By: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 --]]
 type EntityInfo = {
@@ -36,6 +36,10 @@ module.Visualize = function(Info: {
 	local Wipe = {}
 
 	local Root = Info.Tower
+	local TowerBase: MeshPart & { Decal: Decal } = Info.TowerBase
+	local TowerBaseSize = TowerBase.Size
+
+	TowerBase.Size = Vector3.zero
 
 	Wipe.Copy = Info.Tower:Clone()
 
@@ -55,13 +59,26 @@ module.Visualize = function(Info: {
 	Copy.Color = Color3.new(0, 1, 0.26666666666666666)
 	Copy.Parent = Info.Tower
 
-	print("Test")
-
 	local Fade = Feel.Tween.new(Copy, { Transparency = 1 }, 1, {
 		CFrame = Root.CFrame,
 		Size = Root.Size * 5.5,
 		EasingStyle = Enum.EasingStyle.Linear,
 	})
+
+	TowerBase.Decal.Transparency = 0
+
+	Feel.Tween
+		.new(
+			TowerBase,
+			{
+				Size = TowerBaseSize,
+			},
+			1,
+			{
+				EasingStyle = Enum.EasingStyle.Back,
+			}
+		)
+		:Play()
 
 	Fade:Play()
 

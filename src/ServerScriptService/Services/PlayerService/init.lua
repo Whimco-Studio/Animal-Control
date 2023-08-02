@@ -2,7 +2,7 @@
 --Created Date: Wednesday July 26th 2023 5:50:14 pm CEST
 --Author: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 -------
---Last Modified: Wednesday July 26th 2023 5:50:21 pm CEST
+--Last Modified: Wednesday August 2nd 2023 2:14:22 pm CEST
 --Modified By: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 --]]
 --// Services
@@ -12,6 +12,7 @@ local ServerStorage = game:GetService("ServerStorage")
 
 --// Modules
 local PlayerState = require(ReplicatedStorage.State.Player.Server)
+local Settings = require(ReplicatedStorage.Config.Settings)
 local CharacterManager = require(script.CharacterManager)
 
 --// Knit
@@ -28,7 +29,6 @@ local PlayerService = Knit.CreateService({
 })
 
 --// Variables
-local Animations: Folder = ReplicatedStorage.Animations
 
 --// Private Functions
 local function PlayerStateExist(Player: Player)
@@ -97,17 +97,22 @@ function PlayerService:KnitStart()
 
 	-------------Classes-------------
 	-----------Initialize------------
-	Players.PlayerAdded:Connect(function(player)
-		--// Private
-		AddState(player)
 
-		--// Methods
-		self:ListenToState(player)
-		self:AddInfoToState(player)
-	end)
-	Players.PlayerRemoving:Connect(RemoveState)
+	if not Settings.PlayerEnabled then
+		print(Settings.PlayerEnabled, "Settings.PlayerEnabled")
+		Players.PlayerAdded:Connect(function(player)
+			--// Private
+			AddState(player)
 
-	AddState()
+			--// Methods
+			self:ListenToState(player)
+			self:AddInfoToState(player)
+		end)
+
+		Players.PlayerRemoving:Connect(RemoveState)
+
+		AddState()
+	end
 	-----------Initialize------------
 end
 

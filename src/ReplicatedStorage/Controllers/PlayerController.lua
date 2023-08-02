@@ -2,7 +2,7 @@
 --Created Date: Wednesday July 26th 2023 6:13:47 pm CEST
 --Author: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 -------
---Last Modified: Tuesday August 1st 2023 3:18:19 am CEST
+--Last Modified: Wednesday August 2nd 2023 4:50:05 pm CEST
 --Modified By: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 --]]
 --// Services
@@ -66,6 +66,8 @@ function PlayerController:KnitStart()
 			Unit.CanCollide = false
 			Unit.Anchored = true
 
+			Binds.Game.TowerInitialized:Fire(Unit)
+
 			local initRay = castRay()
 			if initRay then
 				self.LastPosition = initRay.Position
@@ -122,6 +124,35 @@ function PlayerController:KnitStart()
 		end
 	end)
 
+	Binds.Game.EndMouseCarry.Event:Connect(function()
+		if self.Connections["Camera"] then
+			self.Connections["Camera"]:Disconnect()
+		end
+
+		local Amount = 1.25
+		if self.Last then
+			local Id = HttpService:GenerateGUID(false)
+
+			local Pos: Vector3 = self.LastPosition
+
+			local C: MeshPart = self.Last:Clone()
+			C:SetAttribute("Id", Id)
+			C.CFrame = CFrame.new(Pos.X, C.Position.Y, Pos.Z)
+			C.Parent = workspace.PlacedUnits
+
+			local ClickDetector = Instance.new("ClickDetector")
+			ClickDetector.Parent = C
+			C.Touched:Connect(function()
+				Binds.Game.TowerClicked:Fire(Id)
+			end)
+
+			GameService.CreateTower:Fire(self.Last.Name, self.LastPosition, Id)
+			Binds.Game.TowerCreated:Fire(C, Id, self.LastPosition)
+
+			self.Last:Destroy()
+		end
+	end)
+
 	UserInputService.InputBegan:Connect(function(input: InputObject, gameProcessedEvent: boolean)
 		if input.KeyCode == Enum.KeyCode.Q then
 			Binds.Game.StartMouseCarry:Fire("Random")
@@ -129,29 +160,7 @@ function PlayerController:KnitStart()
 	end)
 	UserInputService.InputEnded:Connect(function(input: InputObject, gameProcessedEvent: boolean)
 		if input.KeyCode == Enum.KeyCode.Q then
-			if self.Connections["Camera"] then
-				self.Connections["Camera"]:Disconnect()
-			end
-
-			local Amount = 1.25
-			if self.Last then
-				local Id = HttpService:GenerateGUID(false)
-
-				local C: MeshPart = self.Last:Clone()
-				C:SetAttribute("Id", Id)
-				C.Parent = workspace.PlacedUnits
-
-				local ClickDetector = Instance.new("ClickDetector")
-				ClickDetector.Parent = C
-				C.Touched:Connect(function()
-					Binds.Game.TowerClicked:Fire(Id)
-				end)
-
-				GameService.CreateTower:Fire(self.Last.Name, self.LastPosition, Id)
-				Binds.Game.TowerCreated:Fire(C, Id)
-
-				self.Last:Destroy()
-			end
+			Binds.Game.EndMouseCarry:Fire()
 		end
 	end)
 

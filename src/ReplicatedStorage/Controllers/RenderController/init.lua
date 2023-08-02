@@ -2,7 +2,7 @@
 --Created Date: Friday July 28th 2023 12:03:40 am CEST
 --Author: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 -------
---Last Modified: Tuesday August 1st 2023 4:21:15 am CEST
+--Last Modified: Tuesday August 1st 2023 8:55:00 pm CEST
 --Modified By: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 --]]
 --// Services
@@ -81,18 +81,35 @@ function RenderController:KnitStart()
 		end
 	end)
 
-	Binds.Game.TowerCreated.Event:Connect(function(Tower: MeshPart, Id: string)
+	Binds.Game.TowerCreated.Event:Connect(function(Tower: MeshPart, Id: string, Position: Vector3)
+		local TowerBase: MeshPart & { Decal: Decal } = ReplicatedStorage.Assets.TowerBase:Clone()
+		TowerBase.CFrame = CFrame.new(Position) * CFrame.new(0, TowerBase.Size.Y / 2, 0)
+		TowerBase.Decal.Transparency = 1
+
+		TowerBase.Parent = Tower
+
 		self.ActiveTowers[Id] = {
 			Tower = Tower,
+			TowerBase = TowerBase,
 		}
 
 		self:CreateVFX({
 			Type = "Tower",
+			TowerBase = TowerBase,
 			Action = "TowerCreated",
+			Position = Position,
 			id = Id,
 		})
+
+		-- self:CreateVFX({
+		-- 	Type = "Tower",
+		-- 	Tower = Tower,
+		-- 	Action = "TowerIdle",
+		-- 	id = Id,
+		-- })
 	end)
 
+	self:AnimateTowers()
 	self:Updater()
 	-----------Initialize------------
 end
@@ -216,6 +233,34 @@ function RenderController:SpawnAnimal(Info: EntityInfo)
 	WalkAnimationTrack:Play()
 	WalkAnimationTrack.Priority = Enum.AnimationPriority.Action4
 	WalkAnimationTrack:AdjustSpeed(Settings.Speed * 0.05)
+end
+
+function RenderController:AnimateTowers()
+	local amplitude = 3 -- offset on both sides
+	local magnitude = 2.5 -- time
+
+	local selfStartCache = {}
+	local startTimeCache = {}
+
+	RunService:BindToRenderStep("TowerFloat", 0, function(deltaTime)
+		for id, towerInfo: { Tower: MeshPart } in pairs(self.ActiveTowers) do
+			local Tower: MeshPart = towerInfo.Tower
+			local StartCF = selfStartCache[id] or Tower.CFrame * CFrame.new(0, 2, 0)
+
+			if not selfStartCache[id] then
+				selfStartCache[id] = StartCF
+			end
+
+			if not startTimeCache[id] then
+				startTimeCache[id] = tick()
+			end
+
+			local TargetHeight = amplitude * math.sin((startTimeCache[id] + tick()) * math.pi / magnitude)
+			local DesiredCF = StartCF * CFrame.new(0, TargetHeight, 0)
+			Tower.CFrame =
+				Tower.CFrame:Lerp(DesiredCF * CFrame.fromEulerAnglesXYZ(TargetHeight, 0, TargetHeight), deltaTime)
+		end
+	end)
 end
 
 return RenderController
