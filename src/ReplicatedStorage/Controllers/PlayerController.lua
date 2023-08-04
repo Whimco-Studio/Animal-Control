@@ -2,7 +2,7 @@
 --Created Date: Wednesday July 26th 2023 6:13:47 pm CEST
 --Author: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 -------
---Last Modified: Wednesday August 2nd 2023 4:50:05 pm CEST
+--Last Modified: Thursday August 3rd 2023 3:42:25 pm CEST
 --Modified By: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 --]]
 --// Services
@@ -13,6 +13,7 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 --// Modules
+local Settings = require(ReplicatedStorage.Config.Settings)
 local Binds = require(ReplicatedStorage.Config.Bindables)
 local Feel = require(ReplicatedStorage.Modules.Feel)
 
@@ -38,7 +39,7 @@ function PlayerController:KnitStart()
 	self.LastPosition = Vector3.zero
 
 	local raycastParams = RaycastParams.new()
-	raycastParams.FilterType = Enum.RaycastFilterType.Include
+	raycastParams.FilterType = Enum.RaycastFilterType.Whitelist
 	raycastParams.FilterDescendantsInstances = { workspace.Positioning }
 
 	-------------Variables-----------
@@ -67,6 +68,8 @@ function PlayerController:KnitStart()
 			Unit.Anchored = true
 
 			Binds.Game.TowerInitialized:Fire(Unit)
+
+			Unit.Transparency = 1
 
 			local initRay = castRay()
 			if initRay then
@@ -136,6 +139,7 @@ function PlayerController:KnitStart()
 			local Pos: Vector3 = self.LastPosition
 
 			local C: MeshPart = self.Last:Clone()
+			C.Transparency = 0
 			C:SetAttribute("Id", Id)
 			C.CFrame = CFrame.new(Pos.X, C.Position.Y, Pos.Z)
 			C.Parent = workspace.PlacedUnits
@@ -153,16 +157,18 @@ function PlayerController:KnitStart()
 		end
 	end)
 
-	UserInputService.InputBegan:Connect(function(input: InputObject, gameProcessedEvent: boolean)
-		if input.KeyCode == Enum.KeyCode.Q then
-			Binds.Game.StartMouseCarry:Fire("Random")
-		end
-	end)
-	UserInputService.InputEnded:Connect(function(input: InputObject, gameProcessedEvent: boolean)
-		if input.KeyCode == Enum.KeyCode.Q then
-			Binds.Game.EndMouseCarry:Fire()
-		end
-	end)
+	if Settings.Debug then
+		UserInputService.InputBegan:Connect(function(input: InputObject, gameProcessedEvent: boolean)
+			if input.KeyCode == Enum.KeyCode.Q then
+				Binds.Game.StartMouseCarry:Fire("Random")
+			end
+		end)
+		UserInputService.InputEnded:Connect(function(input: InputObject, gameProcessedEvent: boolean)
+			if input.KeyCode == Enum.KeyCode.Q then
+				Binds.Game.EndMouseCarry:Fire()
+			end
+		end)
+	end
 
 	self:Binds()
 	-----------Initialize------------

@@ -10,6 +10,7 @@ const WaveManager: Roact.FunctionComponent<WaveManagerProps> = (props) => {
 		<frame
 			Key="WaveManager"
 			BackgroundTransparency={1}
+			Visible={false}
 			Size={new UDim2(0.151, 0, 0.156, 0)}
 		>
 			<textlabel

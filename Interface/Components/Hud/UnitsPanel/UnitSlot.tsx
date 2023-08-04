@@ -2,13 +2,13 @@
  * Created Date: Wednesday August 2nd 2023 1:40:57 pm CEST
  * Author: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
  * -----
- * Last Modified: Wednesday August 2nd 2023 6:03:43 pm CEST
+ * Last Modified: Thursday August 3rd 2023 2:32:26 pm CEST
  * Modified By: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
  */
 import Roact from "@rbxts/roact";
-import { useEffect, withHooks } from "@rbxts/roact-hooked";
+import { useEffect, useRef, withHooks } from "@rbxts/roact-hooked";
 import { Spring, useGroupMotor } from "@rbxts/roact-hooked-plus";
-import { Players, UserInputService } from "@rbxts/services";
+import { Players, UserInputService, Workspace } from "@rbxts/services";
 import UICorner from "Components/Base/UICorner";
 import UIStroke from "Components/Base/UIStroke";
 import GameBindables from "Config/GameBindables";
@@ -25,6 +25,10 @@ const UnitSlot: Roact.FunctionComponent<UnitSlotProps> = (props) => {
 		size: 0,
 	});
 
+	const viewportRef = useRef<ViewportFrame>();
+	const camera = new Instance("Camera");
+	const worldModel = new Instance("WorldModel");
+
 	useEffect(() => {
 		task.delay(0, () => {
 			setStyle({
@@ -33,6 +37,29 @@ const UnitSlot: Roact.FunctionComponent<UnitSlotProps> = (props) => {
 				}),
 			});
 		});
+
+		const ItemModel = props.Item.Clone();
+
+		const viewport = viewportRef.getValue()!;
+		worldModel.Parent = viewport;
+		camera.Parent = viewport;
+		viewport.CurrentCamera = camera;
+
+		ItemModel.PivotTo(new CFrame(0, 0, 0));
+		camera.CFrame = new CFrame(
+			new Vector3(2.1, 2, -5),
+			ItemModel.GetPivot().Position
+		);
+
+		ItemModel.Parent = Workspace; // Only way for the Animation to load without error?
+		const humanoid = ItemModel.FindFirstChildWhichIsA("Humanoid")!; // Lord forgive me for using !
+
+		ItemModel.Parent = worldModel;
+
+		// cleanup
+		return () => {
+			ItemModel.Destroy();
+		};
 	}, []);
 
 	function createVPF(MeshPart: MeshPart) {
@@ -46,6 +73,7 @@ const UnitSlot: Roact.FunctionComponent<UnitSlotProps> = (props) => {
 			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 			BorderSizePixel={0}
 			Image="rbxasset://textures/ui/GuiImagePlaceholder.png"
+			ImageTransparency={1}
 			Size={style.map(({ size }) =>
 				UDim2.fromScale(0.28500000000000003 * size, 1 * size)
 			)}
@@ -76,6 +104,8 @@ const UnitSlot: Roact.FunctionComponent<UnitSlotProps> = (props) => {
 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 				BorderSizePixel={0}
 				Size={new UDim2(1, 0, 1, 0)}
+				Ref={viewportRef}
+				ZIndex={5}
 			>
 				<uiaspectratioconstraint />
 			</viewportframe>

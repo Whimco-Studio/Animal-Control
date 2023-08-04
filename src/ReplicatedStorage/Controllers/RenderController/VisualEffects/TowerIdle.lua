@@ -2,7 +2,7 @@
 --Created Date: Tuesday August 1st 2023 7:28:50 pm CEST
 --Author: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 -------
---Last Modified: Tuesday August 1st 2023 8:32:17 pm CEST
+--Last Modified: Wednesday August 2nd 2023 6:16:52 pm CEST
 --Modified By: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 --]]
 
@@ -33,19 +33,12 @@ module.Visualize = function(Info)
 
 	task.spawn(function()
 		while Active do
-			local Down = false
-			for i = 0, 1, 0.1 do
-				local value = (Down and 1 or 0)
-				local sin = math.sin(value)
-				local cos = math.cos(value)
+			local TargetHeight = amplitude * math.sin(tick() * math.pi / magnitude)
+			local DesiredCF = StartCF * CFrame.new(0, TargetHeight, 0)
+			Tower.CFrame =
+				Tower.CFrame:Lerp(DesiredCF * CFrame.fromEulerAnglesXYZ(TargetHeight, 0, TargetHeight), task.wait())
 
-				local TargetHeight = amplitude * math.sin(tick() * math.pi / magnitude)
-				local DesiredCF = StartCF * CFrame.new(0, TargetHeight, 0)
-				Tower.CFrame =
-					Tower.CFrame:Lerp(DesiredCF * CFrame.fromEulerAnglesXYZ(TargetHeight, 0, TargetHeight), task.wait())
-				task.wait()
-			end
-			Down = not Down
+			task.wait()
 		end
 	end)
 

@@ -2,7 +2,7 @@
 --Created Date: Friday July 28th 2023 12:03:40 am CEST
 --Author: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 -------
---Last Modified: Tuesday August 1st 2023 8:55:00 pm CEST
+--Last Modified: Friday August 4th 2023 1:47:55 pm CEST
 --Modified By: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 --]]
 --// Services
@@ -67,8 +67,10 @@ function RenderController:KnitStart()
 	self.GameService.CreateVFX:Connect(function(Info: { Type: string, id: string, value: number })
 		self:CreateVFX(Info)
 	end)
-	self.GameService.ClientRender:Connect(function(Info: EntityInfo)
-		self:SpawnAnimal(Info)
+	self.GameService.ClientUpdater:Connect(function(Info: EntityInfo)
+		if Info.Type == "Animal" then
+			self:SpawnAnimal(Info.Payload)
+		end
 	end)
 
 	Binds.Game.RemoveAnimal.Event:Connect(function(ID: string)

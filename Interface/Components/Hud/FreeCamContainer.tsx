@@ -1,5 +1,6 @@
 import Roact from "@rbxts/roact";
 import { withHooks } from "@rbxts/roact-hooked";
+import GameBindables from "Config/GameBindables";
 
 // FreeCamContainer
 
@@ -11,9 +12,9 @@ const FreeCamContainer: Roact.FunctionComponent<FreeCamContainerProps> = (
 	return (
 		<frame
 			Key="FreeCamContainer"
-			AnchorPoint={new Vector2(1, 0)}
+			AnchorPoint={new Vector2(0, 0)}
 			BackgroundTransparency={1}
-			Position={new UDim2(1, 0, 0, 0)}
+			Position={new UDim2(0, 0, 0, 0)}
 			Size={new UDim2(0.073, 0, 0.121, 0)}
 		>
 			<textlabel
@@ -33,6 +34,11 @@ const FreeCamContainer: Roact.FunctionComponent<FreeCamContainerProps> = (
 				Image="rbxassetid://14205765457"
 				Position={new UDim2(0.064, 0, 0.268, 0)}
 				Size={new UDim2(4.534, 0, 0.9450000000000001, 0)}
+				Event={{
+					MouseButton1Click: () => {
+						GameBindables.Interface.ToggleCamera.Fire();
+					},
+				}}
 			>
 				<uiaspectratioconstraint />
 			</imagebutton>

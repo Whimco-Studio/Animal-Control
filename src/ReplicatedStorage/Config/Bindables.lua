@@ -1,5 +1,7 @@
 return {
 	Game = {
+		JoinGame = Instance.new("BindableEvent"),
+		StartWave = Instance.new("BindableEvent"),
 		StartMouseCarry = Instance.new("BindableEvent"),
 		EndMouseCarry = Instance.new("BindableEvent"),
 		TowerClicked = Instance.new("BindableEvent"),
@@ -11,6 +13,14 @@ return {
 		Blur = Instance.new("BindableEvent"),
 		MountScreen = Instance.new("BindableEvent"),
 		UnmountScreen = Instance.new("BindableEvent"),
+
+		ToggleCamera = Instance.new("BindableEvent"),
+
+		Wave = {
+			ResetWave = Instance.new("BindableEvent"),
+			UpdateWave = Instance.new("BindableEvent"),
+			UpdateEntityCount = Instance.new("BindableEvent"),
+		},
 
 		SplashScreen = {
 			ClickToBegin = Instance.new("BindableEvent"),

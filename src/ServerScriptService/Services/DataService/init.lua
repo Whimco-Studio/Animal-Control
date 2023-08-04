@@ -2,7 +2,7 @@
 --Created Date: Wednesday July 26th 2023 5:49:55 pm CEST
 --Author: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 -------
---Last Modified: Wednesday July 26th 2023 5:50:04 pm CEST
+--Last Modified: Thursday August 3rd 2023 2:26:30 pm CEST
 --Modified By: Trendon Robinson at <The_Pr0fessor (Rbx), @TPr0fessor (Twitter)>
 --]]
 
@@ -32,6 +32,7 @@ local ProfileTemplate = {
 	EquippedSkin = "",
 
 	QuirkyCoins = 0,
+	Wins = 0,
 
 	Equipped = {
 		Skin = "",
